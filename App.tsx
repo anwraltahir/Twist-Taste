@@ -52,35 +52,35 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col font-sans bg-primary-50">
       <Header cartCount={cartCount} onOpenCart={() => setIsCartOpen(true)} />
 
-      {/* Hero Section with New Premium Image */}
+      {/* Hero Section with Black Text */}
       <section className="relative h-[85vh] md:h-[90vh] flex items-center justify-center px-4 overflow-hidden bg-primary-100">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1519915028121-7d3463d20b13?q=80&w=2000&auto=format&fit=crop" 
             alt="Twist and Taste Premium Pastries" 
-            className="w-full h-full object-cover brightness-[0.85] contrast-[1.05] scale-100 animate-slow-zoom"
+            className="w-full h-full object-cover brightness-[0.95] contrast-[1.0] scale-100 animate-slow-zoom"
           />
-          {/* Professional Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-primary-50"></div>
-          <div className="absolute inset-0 bg-primary-900/10 mix-blend-overlay"></div>
+          {/* Subtle Overlays for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-primary-50"></div>
+          <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
         </div>
         
-        {/* Hero Content */}
+        {/* Hero Content with Black Text Styling */}
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8 animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/20 backdrop-blur-2xl border border-white/30 text-white text-xs md:text-sm font-black tracking-widest uppercase shadow-2xl">
+          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/40 backdrop-blur-2xl border border-white/60 text-black text-xs md:text-sm font-black tracking-widest uppercase shadow-xl">
             <span className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span>
             مخبوزات طازجة يومياً
           </div>
           
           <div className="space-y-2">
-            <h2 className="text-7xl md:text-9xl font-serif-logo font-black text-white mb-2 tracking-tighter drop-shadow-2xl">
+            <h2 className="text-7xl md:text-9xl font-serif-logo font-black text-black mb-2 tracking-tighter drop-shadow-sm">
               Twist & Taste
             </h2>
             <div className="h-1.5 w-32 bg-accent-500 mx-auto rounded-full shadow-lg shadow-accent-500/50"></div>
           </div>
           
-          <p className="text-xl md:text-3xl text-white font-bold mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-lg">
+          <p className="text-xl md:text-3xl text-black font-bold mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-sm">
             نجمع لكم بين فن المعجنات العصرية 
             <br className="hidden md:block" />
             والطعم الأصيل الذي لا يُنسى ✨
@@ -92,11 +92,11 @@ const App: React.FC = () => {
               className="w-full sm:w-auto bg-primary-500 text-white px-14 py-5 rounded-2xl font-black hover:bg-primary-600 transition-all shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 active:scale-95 text-xl flex items-center justify-center gap-3"
             >
               <ShoppingBag size={24} />
-              <span>اكتشف المنيو</span>
+              <span>اطلب الان</span>
             </button>
           </div>
 
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white/50 hidden md:block">
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-black/30 hidden md:block">
             <ChevronDown size={32} />
           </div>
         </div>

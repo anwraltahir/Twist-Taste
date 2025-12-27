@@ -8,23 +8,30 @@ export const useProducts = () => {
 
   // Load from LocalStorage or Fallback to Constants
   useEffect(() => {
-    const savedProducts = localStorage.getItem('twist_taste_products');
-    let finalProducts: Product[] = INITIAL_PRODUCTS;
+    const savedProductsStr = localStorage.getItem('twist_taste_products');
+    let finalProducts: Product[] = [...INITIAL_PRODUCTS];
 
-    if (savedProducts) {
+    if (savedProductsStr) {
       try {
-        const parsed = JSON.parse(savedProducts);
+        const savedProducts: Product[] = JSON.parse(savedProductsStr);
         
-        // Migration logic: Fix images that use local paths or broken data
-        finalProducts = parsed.map((p: any) => {
+        // Filter out default products from saved list to avoid duplicates
+        // and only keep those added by the user (IDs > 100 for example, but checking existence is better)
+        const customProducts = savedProducts.filter(sp => 
+          !INITIAL_PRODUCTS.some(ip => ip.id === sp.id)
+        );
+
+        // Combine INITIAL_PRODUCTS (from code) with custom ones (from storage)
+        // This ensures updates to code-based products reflect immediately
+        finalProducts = [...INITIAL_PRODUCTS, ...customProducts];
+        
+        // Fix any potentially broken image links in custom products
+        finalProducts = finalProducts.map(p => {
           const isBrokenLocalPath = p.image && !p.image.startsWith('http') && !p.image.startsWith('data:');
-          const isTooLargeBase64 = p.image && p.image.startsWith('data:') && p.image.length > 500000;
-          
-          if (isBrokenLocalPath || isTooLargeBase64) {
-            const initialMatch = INITIAL_PRODUCTS.find(ip => ip.id === p.id || ip.name === p.name);
+          if (isBrokenLocalPath) {
             return {
               ...p,
-              image: initialMatch ? initialMatch.image : `https://via.placeholder.com/800x600?text=${encodeURIComponent(p.name)}`
+              image: `https://via.placeholder.com/800x600?text=${encodeURIComponent(p.name)}`
             };
           }
           return p;
@@ -47,7 +54,7 @@ export const useProducts = () => {
       } catch (error) {
         console.error("Failed to save products to local storage", error);
         if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-          alert("تنبيه: مساحة التخزين ممتلئة! يرجى حذف بعض المنتجات التي تحتوي على صور مرفوعة يدوياً، واستخدام روابط خارجية بدلاً منها.");
+          alert("تنبيه: مساحة التخزين ممتلئة! يرجى حذف بعض المنتجات التي تحتوي على صور مرفوعة يدوياً، واستخدم روابط خارجية بدلاً منها.");
         }
       }
     }
