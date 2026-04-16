@@ -3,11 +3,11 @@ import { Product } from './types';
 export const PRODUCTS: Product[] = [
   {
     id: 1,
-    name: "كرواسون الزبدة الفرنسي",
-    price: 12,
-    description: "كرواسون هش ومقرمش محضر بالزبدة الفرنسية الفاخرة، يخبز طازجاً كل صباح.",
-    image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=800&auto=format&fit=crop",
-    category: "معجنات"
+    name: "كيكة الزعفران الملكية",
+    price: 28,
+    description: "كيكة الزعفران الإسفنجية المشربة بالحليب والهيل، تقدم مع صوص الزعفران الغني.",
+    image: "https://images.unsplash.com/photo-1579306194872-64d3472416a9?q=80&w=800&auto=format&fit=crop",
+    category: "حلويات"
   },
   {
     id: 2,

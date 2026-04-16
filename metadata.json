@@ -1,5 +1,6 @@
 {
-  "name": "Twist and Taste",
-  "description": "متجر إلكتروني عصري لبيع الحلويات والمعجنات مع إمكانية الطلب عبر واتساب",
-  "requestFramePermissions": []
+  "name": "Twist",
+  "description": "متجر Twist للحلويات والمعجنات الفاخرة - طعم أصيل يلتوي في الذاكرة بنكهات مبتكرة",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
 }

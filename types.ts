@@ -18,4 +18,9 @@ export interface OrderDetails {
   notes?: string;
 }
 
+export interface AppSettings {
+  logoUrl: string;
+  heroImageUrl: string;
+}
+
 export const WHATSAPP_NUMBER = "97433824737"; // Store owner's number

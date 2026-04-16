@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Product } from '../types';
-import { X, Plus, Edit2, Trash2, Upload, Image as ImageIcon, RotateCcw, Lock, CheckCircle2, AlertTriangle, Link as LinkIcon, Info, HelpCircle } from 'lucide-react';
+import { Product, AppSettings } from '../types';
+import { X, Plus, Edit2, Trash2, Upload, Image as ImageIcon, RotateCcw, Lock, CheckCircle2, AlertTriangle, Link as LinkIcon, Info, HelpCircle, Palette } from 'lucide-react';
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -10,6 +10,8 @@ interface AdminDashboardProps {
   onEdit: (p: Product) => void;
   onDelete: (id: number) => void;
   onReset: () => void;
+  settings: AppSettings;
+  onUpdateSettings: (s: AppSettings) => void;
 }
 
 const DEFAULT_PASSWORD = "1234";
@@ -21,15 +23,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onAdd,
   onEdit,
   onDelete,
-  onReset
+  onReset,
+  settings,
+  onUpdateSettings
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+  const [activeTab, setActiveTab] = useState<'products' | 'branding'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [imagePreviewError, setImagePreviewError] = useState(false);
   const [imageTab, setImageTab] = useState<'url' | 'upload'>('url');
   const [showStorageInfo, setShowStorageInfo] = useState(false);
+
+  // Settings State
+  const [settingsForm, setSettingsForm] = useState<AppSettings>(settings);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -41,10 +50,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
 
   useEffect(() => {
+    setSettingsForm(settings);
+  }, [settings]);
+
+  useEffect(() => {
     setImagePreviewError(false);
   }, [formData.image, imageTab]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSettingsSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    setTimeout(() => {
+        onUpdateSettings(settingsForm);
+        setIsSavingSettings(false);
+        alert("تم تحديث إعدادات الهوية بنجاح!");
+    }, 500);
+  };
+
+  const handleSettingsImageUpload = (type: 'logo' | 'hero', e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 300 * 1024) {
+        alert("حجم الصورة كبير جداً! يرجى اختيار صورة أقل من 300 كيلوبايت.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSettingsForm(prev => ({ 
+            ...prev, 
+            [type === 'logo' ? 'logoUrl' : 'heroImageUrl']: reader.result as string 
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -147,19 +188,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden">
-      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-2">
-            <h2 className="text-lg md:text-xl font-bold text-gray-800">إدارة المنتجات</h2>
-            <span className="bg-primary-100 text-primary-700 text-[10px] md:text-xs px-2 py-1 rounded-full font-bold">{products.length}</span>
+      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex flex-col md:flex-row gap-4 justify-between md:items-center shadow-sm">
+        <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+                <h2 className="text-lg md:text-xl font-bold text-gray-800">نظام الإدارة</h2>
+            </div>
+            
+            <nav className="flex bg-gray-100 p-1 rounded-xl">
+                <button 
+                    onClick={() => setActiveTab('products')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'products' ? 'bg-white shadow-md text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <Plus size={14} /> المنتجات
+                </button>
+                <button 
+                    onClick={() => setActiveTab('branding')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'branding' ? 'bg-white shadow-md text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <Palette size={14} /> الهوية والبصمة
+                </button>
+            </nav>
         </div>
-        <div className="flex items-center gap-2 md:gap-3">
-            <button onClick={() => setShowStorageInfo(!showStorageInfo)} className="text-primary-600 bg-primary-50 p-2 rounded-lg hover:bg-primary-100 transition-colors" title="معلومات التخزين">
-                <HelpCircle size={18} />
-            </button>
-            <button onClick={onReset} className="text-red-500 hover:bg-red-50 flex items-center gap-1 text-[10px] md:text-sm px-2 md:px-4 py-2 rounded-xl transition-colors font-bold border border-red-100">
-                <RotateCcw size={14} />
-                <span className="hidden sm:inline">تصفير</span>
-            </button>
+
+        <div className="flex items-center justify-between md:justify-end gap-2 md:gap-3">
+            <div className="flex items-center gap-2">
+                <button onClick={() => setShowStorageInfo(!showStorageInfo)} className="text-primary-600 bg-primary-50 p-2 rounded-lg hover:bg-primary-100 transition-colors" title="معلومات التخزين">
+                    <HelpCircle size={18} />
+                </button>
+                <button onClick={onReset} className="text-red-500 hover:bg-red-50 flex items-center gap-1 text-[10px] md:text-sm px-2 md:px-4 py-2 rounded-xl transition-colors font-bold border border-red-100">
+                    <RotateCcw size={14} />
+                    <span className="hidden sm:inline">تصفير كامل</span>
+                </button>
+            </div>
             <button onClick={onClose} className="bg-gray-100 text-gray-500 hover:bg-gray-200 p-2 rounded-full transition-colors"><X size={20} /></button>
         </div>
       </header>
@@ -177,81 +237,198 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       <div className="flex-1 overflow-auto p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
-            <div className="flex justify-end mb-6">
-                <button onClick={openAddForm} className="w-full md:w-auto bg-primary-600 text-white px-6 py-4 md:py-3 rounded-2xl shadow-lg hover:bg-primary-700 flex items-center justify-center gap-2 font-bold transition-all active:scale-95">
-                    <Plus size={20} /><span>إضافة منتج جديد</span>
-                </button>
-            </div>
+            {activeTab === 'products' ? (
+                <>
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="text-sm text-gray-500 font-bold">إجمالي المنتجات: {products.length}</div>
+                        <button onClick={openAddForm} className="bg-primary-600 text-white px-6 py-4 md:py-3 rounded-2xl shadow-lg hover:bg-primary-700 flex items-center justify-center gap-2 font-bold transition-all active:scale-95">
+                            <Plus size={20} /><span>إضافة منتج جديد</span>
+                        </button>
+                    </div>
 
-            {/* Desktop Table View */}
-            <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-right">
-                    <thead className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200">
-                        <tr>
-                            <th className="p-4 w-24">الصورة</th>
-                            <th className="p-4">المنتج</th>
-                            <th className="p-4">السعر</th>
-                            <th className="p-4">القسم</th>
-                            <th className="p-4 w-32 text-center">إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <table className="w-full text-right">
+                            <thead className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200">
+                                <tr>
+                                    <th className="p-4 w-24">الصورة</th>
+                                    <th className="p-4">المنتج</th>
+                                    <th className="p-4">السعر</th>
+                                    <th className="p-4">القسم</th>
+                                    <th className="p-4 w-32 text-center">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {products.map(product => (
+                                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="p-4">
+                                            <img 
+                                              src={product.image} 
+                                              alt="" 
+                                              className="w-12 h-12 rounded-lg object-cover border bg-gray-50"
+                                              onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/150?text=Err"; }}
+                                            />
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="font-bold text-gray-800">{product.name}</div>
+                                            <div className="text-xs text-gray-400 truncate max-w-[200px]">{product.description}</div>
+                                        </td>
+                                        <td className="p-4 text-primary-600 font-bold">{product.price} ر.ق</td>
+                                        <td className="p-4"><span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">{product.category}</span></td>
+                                        <td className="p-4">
+                                            <div className="flex justify-center gap-2">
+                                                <button onClick={() => openEditForm(product)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><Edit2 size={18} /></button>
+                                                <button onClick={() => onDelete(product.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
                         {products.map(product => (
-                            <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4">
-                                    <img 
-                                      src={product.image} 
-                                      alt="" 
-                                      className="w-12 h-12 rounded-lg object-cover border bg-gray-50"
-                                      onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/150?text=Err"; }}
-                                    />
-                                </td>
-                                <td className="p-4">
-                                    <div className="font-bold text-gray-800">{product.name}</div>
-                                    <div className="text-xs text-gray-400 truncate max-w-[200px]">{product.description}</div>
-                                </td>
-                                <td className="p-4 text-primary-600 font-bold">{product.price} ر.ق</td>
-                                <td className="p-4"><span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">{product.category}</span></td>
-                                <td className="p-4">
-                                    <div className="flex justify-center gap-2">
-                                        <button onClick={() => openEditForm(product)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><Edit2 size={18} /></button>
-                                        <button onClick={() => onDelete(product.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                            <div key={product.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
+                                <img 
+                                    src={product.image} 
+                                    alt="" 
+                                    className="w-16 h-16 rounded-xl object-cover border bg-gray-50 shrink-0"
+                                    onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/150?text=Err"; }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-bold text-gray-800 truncate text-sm">{product.name}</div>
+                                    <div className="text-primary-600 font-bold text-sm">{product.price} ر.ق</div>
+                                    <div className="mt-1">
+                                        <span className="bg-gray-50 text-gray-400 text-[10px] px-2 py-0.5 rounded-full border border-gray-100">{product.category}</span>
                                     </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Mobile Card View (Fix for button visibility) */}
-            <div className="md:hidden space-y-4">
-                {products.map(product => (
-                    <div key={product.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4">
-                        <img 
-                            src={product.image} 
-                            alt="" 
-                            className="w-16 h-16 rounded-xl object-cover border bg-gray-50 shrink-0"
-                            onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/150?text=Err"; }}
-                        />
-                        <div className="flex-1 min-w-0">
-                            <div className="font-bold text-gray-800 truncate text-sm">{product.name}</div>
-                            <div className="text-primary-600 font-bold text-sm">{product.price} ر.ق</div>
-                            <div className="mt-1">
-                                <span className="bg-gray-50 text-gray-400 text-[10px] px-2 py-0.5 rounded-full border border-gray-100">{product.category}</span>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <button onClick={() => openEditForm(product)} className="p-3 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-100 active:scale-90 transition-all">
+                                        <Edit2 size={18} />
+                                    </button>
+                                    <button onClick={() => onDelete(product.id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 active:scale-90 transition-all">
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <button onClick={() => openEditForm(product)} className="p-3 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-100 active:scale-90 transition-all">
-                                <Edit2 size={18} />
-                            </button>
-                            <button onClick={() => onDelete(product.id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 active:scale-90 transition-all">
-                                <Trash2 size={18} />
-                            </button>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <div className="max-w-3xl mx-auto">
+                    <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-bl-[5rem] -z-0"></div>
+                        
+                        <div className="relative z-10">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-2">إعدادات الهوية البصرية</h3>
+                            <p className="text-gray-500 text-sm mb-8">خصّص شعار المتجر وصورة الهيرو الرئيسية</p>
+                            
+                            <form onSubmit={handleSettingsSubmit} className="space-y-8">
+                                {/* Logo URL Section */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 text-primary-600 mb-2">
+                                        <ImageIcon size={20} />
+                                        <span className="font-bold">شعار المنصة (Logo)</span>
+                                    </div>
+                                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                                        <div className="w-24 h-24 bg-primary-50 rounded-2xl border border-primary-100 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+                                            {settingsForm.logoUrl ? (
+                                                <img src={settingsForm.logoUrl} alt="Logo Preview" className="w-full h-full object-contain p-2" />
+                                            ) : (
+                                                <ImageIcon size={32} className="text-primary-200" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 w-full space-y-3">
+                                            <input 
+                                                type="text" 
+                                                placeholder="رابط شعار المتجر..." 
+                                                className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-primary-500 bg-gray-50/50"
+                                                value={settingsForm.logoUrl}
+                                                onChange={e => setSettingsForm({...settingsForm, logoUrl: e.target.value})}
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <input 
+                                                    type="file" 
+                                                    id="logo-upload" 
+                                                    className="hidden" 
+                                                    accept="image/*"
+                                                    onChange={(e) => handleSettingsImageUpload('logo', e)} 
+                                                />
+                                                <label htmlFor="logo-upload" className="cursor-pointer text-[10px] font-bold text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg hover:bg-primary-100 transition-colors flex items-center gap-1 border border-primary-100">
+                                                    <Upload size={12} /> رفع مباشر
+                                                </label>
+                                                <span className="text-[9px] text-gray-400">يفضل صورة شفافة PNG</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Hero Image Section */}
+                                <div className="space-y-4 pt-6 border-t border-gray-100">
+                                    <div className="flex items-center gap-2 text-primary-600 mb-2">
+                                        <Palette size={20} />
+                                        <span className="font-bold">صورة الهيرو (Hero Image)</span>
+                                    </div>
+                                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                                        <div className="w-full md:w-48 h-32 bg-primary-50 rounded-2xl border border-primary-100 flex items-center justify-center shrink-0 overflow-hidden shadow-inner order-2 md:order-1">
+                                            {settingsForm.heroImageUrl ? (
+                                                <img src={settingsForm.heroImageUrl} alt="Hero Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ImageIcon size={40} className="text-primary-200" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 w-full space-y-3 order-1 md:order-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="رابط الصورة الرئيسية للهيرو..." 
+                                                className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-primary-500 bg-gray-50/50"
+                                                value={settingsForm.heroImageUrl}
+                                                onChange={e => setSettingsForm({...settingsForm, heroImageUrl: e.target.value})}
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <input 
+                                                    type="file" 
+                                                    id="hero-upload" 
+                                                    className="hidden" 
+                                                    accept="image/*"
+                                                    onChange={(e) => handleSettingsImageUpload('hero', e)}
+                                                />
+                                                <label htmlFor="hero-upload" className="cursor-pointer text-[10px] font-bold text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg hover:bg-primary-100 transition-colors flex items-center gap-1 border border-primary-100">
+                                                    <Upload size={12} /> رفع مباشر
+                                                </label>
+                                                <span className="text-[9px] text-gray-400">المساحة المقترحة: 1200×800 بكسل</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    type="submit" 
+                                    disabled={isSavingSettings}
+                                    className="w-full bg-primary-600 text-white font-bold py-4 rounded-2xl hover:bg-primary-700 transition-all shadow-xl shadow-primary-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
+                                >
+                                    {isSavingSettings ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
+                                    <span>حفظ التعديلات في الهوية</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
-                ))}
-            </div>
+                    
+                    <div className="mt-8 bg-accent-50/50 border border-accent-100 p-6 rounded-3xl flex items-start gap-4">
+                        <Info className="text-accent-600 shrink-0" size={24} />
+                        <div className="text-sm text-accent-800 space-y-2">
+                            <p className="font-bold">ملاحظات هامة:</p>
+                            <ul className="list-disc list-inside space-y-1">
+                                <li>يتم حفظ الصور المرفوعة مباشرة في ذاكرة المتصفح.</li>
+                                <li>إذا كانت الصورة كبيرة جداً، يفضل استخدام رابط خارجي (مثل Google Drive أو Imgur).</li>
+                                <li>عند الضغط على "تصفير كامل" سيتم استعادة الصور الافتراضية.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
       </div>
 
@@ -385,4 +562,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 // Simple helper icon for the select dropdown
 const ChevronDown = ({ size }: { size: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+);
+
+const Loader2 = ({ size, className }: { size: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
 );
